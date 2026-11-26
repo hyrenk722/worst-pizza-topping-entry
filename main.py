@@ -15,13 +15,17 @@ ENTRY = "Durian pizza: banned from three hotels, two airports, and now \u2014 tr
 MAX_CHARS = 200
 
 
-def check_gate(text):
-    """Return True when the entry passes the competition gate."""
+def validate(text):
+    """Check every gate rule for the entry text; return True if it passes."""
     if not isinstance(text, str):
         return False
-    if len(text) < 1 or len(text) > MAX_CHARS:
+    if len(text) < 1:
+        return False
+    if len(text) > MAX_CHARS:
         return False
     if not text.strip():
+        return False
+    if "\n" in text or "\r" in text:
         return False
     try:
         text.encode("utf-8")
@@ -30,14 +34,25 @@ def check_gate(text):
     return True
 
 
+def check_gate(text):
+    """Gate wrapper kept for the entry harness; delegates to validate()."""
+    return validate(text)
+
+
+def render():
+    """Return the entry text exactly as it will be written."""
+    return ENTRY
+
+
 def main():
-    if not check_gate(ENTRY):
+    text = render()
+    if not check_gate(text):
         print("gate failed: entry is not 1-200 non-blank characters", file=sys.stderr)
         return 1
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "entry.txt")
-    data = ENTRY.encode("utf-8")
+    data = text.encode("utf-8")
     with open(path, "wb") as f:
         f.write(data)
     with open(path, "rb") as f:
